@@ -1,0 +1,36 @@
+name: paper-trading
+
+# Paper trading diario (órdenes SIMULADAS, datos públicos, sin secretos).
+# Los crons solo corren desde la rama por defecto (main): hay que mergear antes.
+on:
+  schedule:
+    - cron: "20 0 * * *"   # corrida principal, 00:20 UTC
+    - cron: "40 1 * * *"   # reintento: si la principal ya corrió, el script la saltea
+  workflow_dispatch:        # ejecución manual desde la pestaña Actions
+
+permissions:
+  contents: write           # solo para guardar el estado en la rama paper-state
+
+concurrency:
+  group: paper-trading
+  cancel-in-progress: false
+
+jobs:
+  paper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: crypto_backtest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: crypto_backtest/requirements.txt
+      - run: pip install -r requirements.txt
+      - name: Tests (si fallan, no se opera)
+        run: python -m pytest -q -p no:cacheprovider
+      - name: Corrida diaria
+        run: bash scripts/paper_cloud.sh
