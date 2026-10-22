@@ -15,9 +15,11 @@ class AgenteDesarrollador:
         self.llm = llm
         self.intentos = 0
 
-    def procesar(self, plan: str, feedback: str = "") -> str:
+    def procesar(self, plan: str, feedback: str = "", contexto: str = "") -> str:
         self.intentos += 1
         prompt = f"Implementá en Python siguiendo este plan:\n{plan}\n"
+        if contexto:
+            prompt += f"\n{contexto}\n"
         if feedback:
             prompt += f"\nFEEDBACK DEL REVISOR (corregí todo):\n{feedback}\n"
         prompt += "\nRespondé solo con un bloque ```python."

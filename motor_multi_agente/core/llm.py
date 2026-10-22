@@ -7,6 +7,10 @@ class LLMSimulado:
     feedback del revisor, para demostrar que el bucle realmente lo usa."""
 
     def completar(self, prompt: str) -> str:
+        if "GENERAR PRUEBAS" in prompt:
+            return "```python\nassert hacer_tarea('a')['ok'] is True\n```"
+        if "REVISIÓN DE SEGURIDAD" in prompt:
+            return '{"aprobado": true, "comentarios": []}'
         if "FEEDBACK DEL REVISOR" in prompt:
             return (
                 "```python\n"
