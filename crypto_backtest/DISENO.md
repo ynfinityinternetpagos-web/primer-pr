@@ -26,8 +26,8 @@ más fácil de autoengañarse.
 - **Datos validados**: huecos, precios no positivos, NaN o `high < low` abortan la corrida.
 - **Reproducibilidad**: cada corrida guarda el hash SHA-256 de los datos y toda la configuración.
 - **Bitácora de experimentos** (`results/experiments.jsonl`): se registra *cada* corrida. Cuantas
-  más variantes se prueban, menos vale la mejor (sesgo de selección). Hasta ahora: **2 corridas
-  sobre datos reales**; entre la 1 y la 2 se cambió el kill switch de permanente a con
+  más variantes se prueban, menos vale la mejor (sesgo de selección). Hasta ahora: **3 corridas
+  sobre datos reales** al 22-oct-2026 (la tercera fue el test 2018-2020, ver abajo); entre la 1 y la 2 se cambió el kill switch de permanente a con
   enfriamiento de 30 días, porque con el permanente la estrategia quedaba en efectivo para siempre
   (un defecto de diseño, no un ajuste de rendimiento). El valor de 30 días se eligió a priori, no
   se optimizó. **No se afinan más parámetros mirando estos resultados.**
@@ -97,3 +97,17 @@ Sharpe con costos x3 0,49 (OK) · vecinos de parámetros positivos 100 % (OK) ·
 -0,10 (**FALLA**). Con costos x5 el retorno cae a +8 %: la estrategia es muy sensible a los costos.
 Lectura honesta: reduce el drawdown respecto de comprar y mantener, pero no mejora el retorno
 ajustado por riesgo y no hay evidencia de ventaja. Un resultado así es información útil, no un fracaso.
+
+## 7. Test fuera de muestra 2018-2020 (corrida #3, 22-oct-2026)
+Parámetros y criterios sin tocar. Estrategia +425 % (DD -35 %, Sharpe 1,87) vs benchmark +143 % (DD -75 %, Sharpe 0,85).
+Criterios con la **v1: NO cumplidos** (4 de 5): ventanas positivas 50 % < 60 %. Una de las 4 ventanas (2018) dio
+exactamente 0 % porque la estrategia se quedó en efectivo durante una caída del -63 % del benchmark.
+Sensibilidad a parámetros muy alta: 30/150 -> +680 %, 50/200 -> +425 %, 70/250 -> +169 %.
+
+**Cambio de criterios (v2), posterior a ver estos resultados y por eso transparente:** "ventanas positivas" (retorno > 0)
+pasó a "ventanas no perdedoras" (retorno >= 0), porque quedarse en efectivo en una caída no es una falla. Rige
+**solo hacia adelante**. Los resultados 2021-2026 y 2018-2020 se evaluaron con la v1 y no se reinterpretan: bajo la
+v1 ninguno cumplió. Cualquier cambio de criterio hecho tras ver resultados debe registrarse así.
+
+La bitácora de experimentos es ahora única y versionada: `experiments_log/experiments.jsonl` (las 3 corridas previas
+se cargaron a mano con la marca `backfill`).

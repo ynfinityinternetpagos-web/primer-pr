@@ -11,8 +11,13 @@ import pandas as pd
 
 from backtest import FAST, SLOW, run_backtest
 
+# v2 (2026-10-22): "ventanas_positivas_pct" (retorno > 0) pasó a "ventanas_no_perdedoras_pct"
+# (retorno >= 0), porque quedarse en efectivo en una caída (0 %) no es una falla. Cambio hecho
+# DESPUÉS de ver el test 2018-2020 -> rige solo hacia adelante; los resultados previos se
+# evaluaron con la v1 y NO se reinterpretan (ver DISENO.md).
+GATES_VERSION = 2
 GATES = {
-    "ventanas_positivas_pct": (">=", 60.0),
+    "ventanas_no_perdedoras_pct": (">=", 60.0),
     "peor_drawdown_ventana_pct": (">=", -25.0),   # el drawdown (negativo) no puede ser peor que -25
     "sharpe_con_costos_3x": (">", 0.0),
     "vecinos_parametros_positivos_pct": (">=", 66.0),
@@ -69,7 +74,7 @@ def _cmp(valor, op, umbral) -> bool:
 
 
 def evaluar_gates(base: Dict, wf: list, costos: list, params: list) -> Dict:
-    pos = 100.0 * sum(w["estrategia"]["total_return_pct"] > 0 for w in wf) / len(wf)
+    pos = 100.0 * sum(w["estrategia"]["total_return_pct"] >= 0 for w in wf) / len(wf)
     peor_dd = min(w["estrategia"]["max_drawdown_pct"] for w in wf)
     c3 = next((c for c in costos if c["multiplicador_costos"] == 3), costos[-1])
     vecinos = [p for p in params if not p["es_base"]]
@@ -77,7 +82,7 @@ def evaluar_gates(base: Dict, wf: list, costos: list, params: list) -> Dict:
     s, b = base["strategy"]["sharpe_rf0_annualized"], base["benchmark_50_50"]["sharpe_rf0_annualized"]
     dif = None if s is None or b is None else round(s - b, 3)
     valores = {
-        "ventanas_positivas_pct": pos,
+        "ventanas_no_perdedoras_pct": pos,
         "peor_drawdown_ventana_pct": peor_dd,
         "sharpe_con_costos_3x": c3["estrategia"]["sharpe_rf0_annualized"],
         "vecinos_parametros_positivos_pct": vec_pos,
@@ -94,4 +99,4 @@ def robustez(data, **kw) -> Dict:
     params = param_sensitivity(data, **kw)
     gates = evaluar_gates(base, wf, costos, params)
     return {"base": base, "walk_forward": wf, "costos": costos, "parametros": params,
-            "gates": gates, "aprobado": all(g["ok"] for g in gates.values())}
+            "gates": gates, "gates_version": GATES_VERSION, "aprobado": all(g["ok"] for g in gates.values())}

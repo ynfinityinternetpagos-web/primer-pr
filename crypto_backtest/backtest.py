@@ -289,9 +289,14 @@ def run_backtest(data: Dict[str, pd.DataFrame], capital: float = 1000.0, fee: fl
 
 
 # ------------------------------------------------------------------- CLI
-def _registrar_experimento(out: Path, report: Dict) -> int:
-    """Bitácora de TODAS las corridas: cuantas más variantes probás, menos vale la mejor."""
-    archivo = out / "experiments.jsonl"
+LOG_EXPERIMENTOS = Path(__file__).resolve().parent / "experiments_log" / "experiments.jsonl"
+
+
+def _registrar_experimento(report: Dict) -> int:
+    """Bitácora ÚNICA de TODAS las corridas sobre datos reales (versionada en git):
+    cuantas más variantes se prueban, menos vale la mejor."""
+    archivo = LOG_EXPERIMENTOS
+    archivo.parent.mkdir(parents=True, exist_ok=True)
     previas = sum(1 for _ in archivo.open()) if archivo.exists() else 0
     entrada = {"ts": datetime.now(timezone.utc).isoformat(), "config": report["configuration"],
                "strategy": report["strategy"]}
@@ -325,7 +330,7 @@ def main():
 
     kw = dict(capital=args.capital, fee=args.fee, slippage=args.slippage, eval_start=args.start)
     report, strat, bench = run_backtest(data, **kw)
-    report["experiment_number"] = _registrar_experimento(out, report)
+    report["experiment_number"] = _registrar_experimento(report)
     (out / "metrics.json").write_text(json.dumps(report, indent=2))
     pd.concat([strat["equity"].rename("strategy_equity"),
                bench["equity"].rename("benchmark_equity")], axis=1).to_csv(out / "equity_curve.csv", index_label="date")
