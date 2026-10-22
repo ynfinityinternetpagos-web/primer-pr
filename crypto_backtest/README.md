@@ -61,7 +61,7 @@ bid, comisión 0,10 %) -> bitácora. Un test verifica que opera los mismos días
 apertura, así que correr tarde invalida la comparación (el criterio `max_retraso_min` lo controla). Ejemplo
 con el Programador de tareas, ajustando rutas y la hora a tu zona (00:10 UTC = 21:10 en UTC-3):
 ```powershell
-$a = New-ScheduledTaskAction -Execute "C:uta\.venv\Scripts\python.exe" -Argument "paper.py run" -WorkingDirectory "C:uta\crypto_backtest"
+$a = New-ScheduledTaskAction -Execute "C:\ruta\.venv\Scripts\python.exe" -Argument "paper.py run" -WorkingDirectory "C:\ruta\crypto_backtest"
 $t = New-ScheduledTaskTrigger -Daily -At 21:10
 Register-ScheduledTask -TaskName "PaperTrading" -Action $a -Trigger $t
 ```
