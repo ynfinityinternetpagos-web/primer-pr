@@ -49,7 +49,7 @@ kill switch con enfriamiento, benchmark con el mismo motor y costos.
 - El kill switch **no es un tope garantizado**: se evalúa al cierre y, al rearmarse con pico nuevo,
   la pérdida acumulada medida desde el máximo histórico puede superar el 15 % (en el backtest real: -39 %).
 
-## 4. Arquitectura propuesta para ejecución en vivo (NO implementada)
+## 4. Arquitectura de ejecución (PaperBroker implementado; LiveBroker NO)
 Principio: **el código de estrategia nunca toca claves ni el exchange**.
 
 ```
@@ -68,7 +68,14 @@ datos -> señal (pura, la misma del backtest) -> órdenes deseadas
   exchange antes de operar, si la API o los datos fallan → **no operar** y alertar, log inmutable de
   cada decisión, alerta por divergencia live vs. backtest.
 - **Sin apalancamiento, sin shorts, sin auto-optimización** de parámetros en vivo.
-- Antes de escribir el `LiveBroker`: probar el `PaperBroker` 90+ días y que la etapa 1 apruebe.
+- **Implementado:** `paper_trading/` con `Broker` (interfaz), `PaperBroker`, `RiskGuard`, datos públicos
+  y el runner diario (`paper.py`). El kill switch en paper también es de **rearme manual**.
+- **Criterios de la etapa 1** (`paper_trading/runner.ETAPA1`, fijados antes de empezar): ≥ 90 días corridos,
+  ≤ 3 % de corridas fallidas, ≤ 3 días seguidos sin correr, costo de spread promedio ≤ 0,10 % (el doble de
+  lo modelado), 0 rechazos del RiskGuard y corridas a ≤ 120 min de las 00:00 UTC.
+- El "slippage" se mide **separado** del movimiento de mercado: costo de spread (ejecución) por un lado y
+  desvío contra la apertura (mercado + demora) por otro. Mezclarlos daría números sin sentido.
+- Antes de escribir el `LiveBroker`: que la etapa 1 apruebe, y recién ahí decidir.
 
 ## 5. Preguntas que tenés que responder antes de la etapa 2
 - ¿Cuánto podés perder por completo sin que afecte tu vida? (ese es el techo, no el punto de partida)

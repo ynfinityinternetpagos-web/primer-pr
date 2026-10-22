@@ -40,3 +40,29 @@ mismo motor y ventana), costos de rebalanceo por desvío (ahora se cobran), ejec
 cierre (ahora a la apertura siguiente), kill switch permanente que dejaba la estrategia fuera del
 mercado (ahora con enfriamiento), endpoint bloqueable por región, validación de datos, hash de
 datos y bitácora de experimentos, y 18 tests (antes 3).
+
+## Paper trading (`paper.py`) — órdenes simuladas, uso personal
+Señales y precios reales y públicos, **órdenes simuladas**: no hay claves ni código que opere en un exchange.
+
+```bash
+python paper.py run                 # una corrida por día UTC (idempotente: repetirla el mismo día no hace nada)
+python paper.py status              # estado y equity actual
+python paper.py report              # métricas + criterios de la etapa 1 (agregá --vs-backtest para comparar)
+python paper.py rearm --confirmo    # rearme MANUAL del kill switch (nunca automático)
+```
+Estado y bitácora en `paper_state/` (`state.json`, `journal.jsonl`; ignorados por git).
+
+**Cómo funciona una corrida:** baja velas cerradas -> valida datos (huecos, frescura, spread y precio
+sospechosos abortan sin tocar el estado) -> misma señal y misma regla de rebalanceo que el backtest
+(`plan_rebalance`) -> kill switch -> `RiskGuard` (límites duros) -> `PaperBroker` (compra al ask, vende al
+bid, comisión 0,10 %) -> bitácora. Un test verifica que opera los mismos días que el backtest.
+
+**Programarlo (Windows, una vez por día poco después de las 00:00 UTC)** — el backtest asume ejecutar en la
+apertura, así que correr tarde invalida la comparación (el criterio `max_retraso_min` lo controla). Ejemplo
+con el Programador de tareas, ajustando rutas y la hora a tu zona (00:10 UTC = 21:10 en UTC-3):
+```powershell
+$a = New-ScheduledTaskAction -Execute "C:uta\.venv\Scripts\python.exe" -Argument "paper.py run" -WorkingDirectory "C:uta\crypto_backtest"
+$t = New-ScheduledTaskTrigger -Daily -At 21:10
+Register-ScheduledTask -TaskName "PaperTrading" -Action $a -Trigger $t
+```
+La PC tiene que estar encendida a esa hora; si no, la corrida se pierde (queda registrada como día sin correr).

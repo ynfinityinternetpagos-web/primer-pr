@@ -147,6 +147,20 @@ def make_weights(close: pd.DataFrame, fast: int = FAST, slow: int = SLOW,
 
 
 # ------------------------------------------------------------- simulación
+def plan_rebalance(tgt: np.ndarray, last_target: np.ndarray, units: np.ndarray, px: np.ndarray,
+                   cash: float, cost_rate: float, drift_band: float) -> Optional[np.ndarray]:
+    """Regla única de rebalanceo (la usan el backtest y el paper trading).
+    Devuelve el cambio de posición en USDT por activo, o None si no hay que operar.
+    Rebalancea si cambia el objetivo o el desvío supera `drift_band`."""
+    held = units * px
+    v = cash + held.sum()
+    cur_w = held / v if v > 0 else np.zeros(len(tgt))
+    if not ((np.abs(tgt - last_target) > 1e-12).any() or (np.abs(cur_w - tgt) > drift_band).any()):
+        return None
+    v_eff = v - cost_rate * np.abs(tgt * v - held).sum()  # reserva para costos
+    return tgt * v_eff - held
+
+
 def simulate(opens: pd.DataFrame, closes: pd.DataFrame, targets: pd.DataFrame,
              capital: float, fee: float, slippage: float,
              drift_band: float = 0.10, kill_dd: Optional[float] = None,
@@ -166,13 +180,9 @@ def simulate(opens: pd.DataFrame, closes: pd.DataFrame, targets: pd.DataFrame,
             killed = False                      # fin del enfriamiento: se rearma el kill switch
             peak = cash + float((units * o).sum())  # con un pico nuevo (ya estamos en efectivo)
         tgt = np.zeros(n) if killed else targets.loc[date].to_numpy(float)
-        held = units * o
-        v_open = cash + held.sum()
-        cur_w = held / v_open if v_open > 0 else np.zeros(n)
         turnover = cost = 0.0
-        if (np.abs(tgt - last_target) > 1e-12).any() or (np.abs(cur_w - tgt) > drift_band).any():
-            v_eff = v_open - cost_rate * np.abs(tgt * v_open - held).sum()  # reserva para costos
-            delta = tgt * v_eff - held
+        delta = plan_rebalance(tgt, last_target, units, o, cash, cost_rate, drift_band)
+        if delta is not None:
             turnover = float(np.abs(delta).sum())
             cost = turnover * cost_rate
             cash -= float(delta.sum()) + cost
