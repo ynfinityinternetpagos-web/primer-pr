@@ -66,3 +66,18 @@ $t = New-ScheduledTaskTrigger -Daily -At 21:10
 Register-ScheduledTask -TaskName "PaperTrading" -Action $a -Trigger $t
 ```
 La PC tiene que estar encendida a esa hora; si no, la corrida se pierde (queda registrada como día sin correr).
+
+## Correrlo en la nube (GitHub Actions) — sin dejar la PC prendida
+`.github/workflows/paper-trading.yml` corre `paper.py run` todos los días a las 00:20 UTC (con un reintento
+a las 01:40 que se saltea si la principal ya corrió). Antes de operar corre los tests: si fallan, no se opera.
+El estado y la bitácora se guardan en la rama **`paper-state`** (un commit por día).
+
+- Los crons de GitHub **solo corren desde `main`**: hay que mergear estas ramas primero. También se puede
+  disparar a mano desde Actions -> paper-trading -> Run workflow.
+- Sin secretos ni claves: solo datos públicos. Si el repo es **público**, la bitácora también lo es.
+- GitHub puede demorar los crons unos minutos (a veces más a medianoche UTC); el criterio
+  `max_retraso_min` (120 min) lo vigila. Falla una corrida -> GitHub te avisa por mail.
+- GitHub **desactiva los crons de repos públicos sin actividad por 60 días**; revisá que siga activo
+  (Actions -> paper-trading) y volvé a habilitarlo si hace falta.
+- Ver resultados: `git fetch && git checkout paper-state` (o mirar los archivos en GitHub) y correr
+  `python paper.py report --dir <carpeta con state.json y journal.jsonl>`.
