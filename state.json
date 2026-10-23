@@ -1,0 +1,23 @@
+{
+  "broker": {
+    "fee": 0.001,
+    "cash": 0.5004234334627427,
+    "units": {
+      "BTCUSDT": 0.006135738764147303,
+      "ETHUSDT": 0.20896247046587016
+    }
+  },
+  "meta": {
+    "inception": "2026-10-23",
+    "initial_capital": 1000.0,
+    "last_run_date": "2026-10-23",
+    "last_target": {
+      "BTCUSDT": 0.5,
+      "ETHUSDT": 0.5
+    },
+    "peak": 1000.0,
+    "prev_equity": 999.0004234334627,
+    "killed": false,
+    "kill_reason": null
+  }
+}
