@@ -10,13 +10,13 @@
   "meta": {
     "inception": "2026-10-23",
     "initial_capital": 1000.0,
-    "last_run_date": "2026-10-28",
+    "last_run_date": "2026-10-29",
     "last_target": {
       "BTCUSDT": 0.5,
       "ETHUSDT": 0.5
     },
     "peak": 1000.0,
-    "prev_equity": 987.6994269833518,
+    "prev_equity": 987.1525020435342,
     "killed": false,
     "kill_reason": null
   }
